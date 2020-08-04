@@ -251,11 +251,18 @@ func SchemaDump(dbName string, outputFile string, opt Options) (string, error) {
 		RejectRegexp(regexp.MustCompile(`^SET`)).
 		RejectRegexp(regexp.MustCompile(`^GRANT`)).Exec("cat -s")
 
+	n := p.ExitStatus()
+	if n > 0 {
+		p.SetError(nil)
+		out, _ := p.String()
+		return "", fmt.Errorf("raw error: %s", out)
+	}
+
 	if outputFile != "" {
 		if _, err := p.WriteFile(outputFile); err != nil {
 			return "", err
 		}
-		// TODO(mf): ye we could return the string as well.
+		// TODO(mf): return string as well and let caller decide to ignore.
 		return "", nil
 	}
 
@@ -318,7 +325,7 @@ func run(cmd string, o Options) (string, error) {
 	if n > 0 {
 		exec.SetError(nil)
 		out, _ := exec.String()
-		return "", fmt.Errorf("raw: %s", out)
+		return "", fmt.Errorf("raw error: %s", out)
 	}
 
 	out, err := exec.String()
@@ -334,7 +341,7 @@ func dockerPull(imageName string) error {
 	if p.ExitStatus() > 0 {
 		p.SetError(nil)
 		out, _ := p.String()
-		return fmt.Errorf("raw: %s", out)
+		return fmt.Errorf("raw error: %s", out)
 	}
 
 	return nil
