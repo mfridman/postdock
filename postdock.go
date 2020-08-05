@@ -122,8 +122,7 @@ func Create(dbName string, opt Options) error {
 		queries = append(queries, fmt.Sprintf(q, opt.DBUser))
 	}
 
-	q = fmt.Sprintf(strings.Join(queries, "; "), opt.DBUser)
-	cmd = psql(dbName, q, opt)
+	cmd = psql(dbName, strings.Join(queries, "; "), opt)
 	if _, err = run(cmd, opt); err != nil {
 		return err
 	}
