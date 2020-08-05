@@ -87,13 +87,17 @@ func Create(dbName string, opt Options) error {
 		if err != nil {
 			return err
 		}
-		log.Printf("[%s]: successfully created user:%s", out, opt.DBUser)
+		if opt.Debug {
+			log.Printf("[%s]: successfully created user:%s", out, opt.DBUser)
+		}
 	}
 
 	// Only continue creating a DB if one does not already exists, but do not fail otherwise, this function
 	// should be idempotent.
 	if err := Exists(dbName, opt); err == nil {
-		log.Printf("skipping creating existing database:%s", dbName)
+		if opt.Debug {
+			log.Printf("skipping creating existing database:%s", dbName)
+		}
 		return nil
 	}
 
@@ -104,7 +108,9 @@ func Create(dbName string, opt Options) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("[%s]: successfully created database:%s", out, dbName)
+	if opt.Debug {
+		log.Printf("[%s]: successfully created database:%s", out, dbName)
+	}
 
 	// Yes, we could do this in one shot. But let's keep it readable and extensible. Hit the DB 4 times and
 	// log each command out.
@@ -122,7 +128,9 @@ func Create(dbName string, opt Options) error {
 		if err != nil {
 			return err
 		}
-		log.Printf("[%s]: successfully applied PRIVILEGES to user:%s on db:%s", out, opt.DBUser, dbName)
+		if opt.Debug {
+			log.Printf("[%s]: successfully applied PRIVILEGES to user:%s on db:%s", out, opt.DBUser, dbName)
+		}
 	}
 
 	return nil
@@ -144,7 +152,9 @@ func Exists(dbName string, opt Options) error {
 		return err
 	}
 	if exists {
-		log.Printf("skipping creating db:%s exists", dbName)
+		if opt.Debug {
+			log.Printf("skipping creating db:%s exists", dbName)
+		}
 		return nil
 	}
 
@@ -163,7 +173,9 @@ func Terminate(dbName string, opt Options) error {
 		return err
 	}
 
-	log.Printf("[%s]: terminate db:%s errors:%v", out, dbName, err)
+	if opt.Debug {
+		log.Printf("[%s]: terminate db:%s errors:%v", out, dbName, err)
+	}
 
 	return nil
 }
@@ -180,7 +192,9 @@ func Drop(dbName string, opt Options) error {
 		return err
 	}
 
-	log.Printf("[%s]: drop db:%s", out, dbName)
+	if opt.Debug {
+		log.Printf("[%s]: drop db:%s", out, dbName)
+	}
 
 	return nil
 }
@@ -220,8 +234,9 @@ func Import(dbName string, sqlFile string, opt Options) error {
 		return err
 	}
 
-	log.Printf("[%s]: successfully imported into db:%s from file:%s",
-		out, dbName, sqlFile)
+	if opt.Debug {
+		log.Printf("[%s]: successfully imported into db:%s from file:%s", out, dbName, sqlFile)
+	}
 
 	return nil
 }
