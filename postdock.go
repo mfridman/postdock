@@ -112,25 +112,23 @@ func Create(dbName string, opt Options) error {
 		log.Printf("[%s]: successfully created database:%s", out, dbName)
 	}
 
-	// Yes, we could do this in one shot. But let's keep it readable and extensible. Hit the DB 4 times and
-	// log each command out.
-	queries := []string{
+	var queries []string
+	for _, q := range []string{
 		"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO %s",
 		"GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO %s",
 		"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO %s",
 		"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO %s",
+	} {
+		queries = append(queries, fmt.Sprintf(q, opt.DBUser))
 	}
 
-	for _, in := range queries {
-		q := fmt.Sprintf(in, opt.DBUser)
-		cmd := psql(dbName, q, opt)
-		out, err = run(cmd, opt)
-		if err != nil {
-			return err
-		}
-		if opt.Debug {
-			log.Printf("[%s]: successfully applied PRIVILEGES to user:%s on db:%s", out, opt.DBUser, dbName)
-		}
+	q = fmt.Sprintf(strings.Join(queries, "; "), opt.DBUser)
+	cmd = psql(dbName, q, opt)
+	if _, err = run(cmd, opt); err != nil {
+		return err
+	}
+	if opt.Debug {
+		log.Printf("successfully applied PRIVILEGES to user:%s on db:%s", opt.DBUser, dbName)
 	}
 
 	return nil
