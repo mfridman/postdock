@@ -303,12 +303,20 @@ func psqlFile(dbName string, fileName string, o Options) string {
 func run(cmd string, o Options) (string, error) {
 	// Inside a docker container we expect the command name to be available.
 	if inDocker() {
-		s, err := script.Exec(cmd).String()
+		p := script.Exec(cmd)
+		n := p.ExitStatus()
+		if n > 0 {
+			p.SetError(nil)
+			out, _ := p.String()
+			return "", fmt.Errorf("raw error: %s", out)
+		}
+
+		out, err := p.String()
 		if err != nil {
 			return "", err
 		}
 
-		return strings.TrimSpace(s), nil
+		return strings.TrimSpace(out), nil
 	}
 
 	// Pull the image silently.
@@ -332,15 +340,15 @@ func run(cmd string, o Options) (string, error) {
 		log.Printf("raw docker command:\n%s", e)
 	}
 
-	exec := script.Exec(e)
-	n := exec.ExitStatus()
+	p := script.Exec(e)
+	n := p.ExitStatus()
 	if n > 0 {
-		exec.SetError(nil)
-		out, _ := exec.String()
+		p.SetError(nil)
+		out, _ := p.String()
 		return "", fmt.Errorf("raw error: %s", out)
 	}
 
-	out, err := exec.String()
+	out, err := p.String()
 	if err != nil {
 		return "", err
 	}
