@@ -238,9 +238,8 @@ func Import(dbName string, sqlFile string, opt Options) error {
 	return nil
 }
 
-// SchemaDump does a schema-only only pg_dump, cleans out specific lines and
-// writes the output to a file or returns the string. One or the other, but not both.
-// If file is empty string, the output is returned to the caller.
+// SchemaDump does a schema-only pg_dump, cleans out specific lines and
+// returns the output, optionally writes output to a file if not empty string.
 func SchemaDump(dbName string, outputFile string, opt Options) (string, error) {
 	if err := opt.isValid(dbName); err != nil {
 		return "", err
@@ -270,15 +269,22 @@ func SchemaDump(dbName string, outputFile string, opt Options) (string, error) {
 		return "", fmt.Errorf("raw error: %s", out)
 	}
 
-	if outputFile != "" {
-		if _, err := p.WriteFile(outputFile); err != nil {
-			return "", err
-		}
-		// TODO(mf): return string as well and let caller decide to ignore.
-		return "", nil
+	dump, err := p.String()
+	if err != nil {
+		return "", err
 	}
 
-	return p.String()
+	if outputFile != "" {
+		f, err := os.OpenFile(outputFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			return "", err
+		}
+		if _, err := f.WriteString(dump); err != nil {
+			return "", err
+		}
+	}
+
+	return dump, nil
 }
 
 func inDocker() bool {
