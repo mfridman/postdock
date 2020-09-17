@@ -249,8 +249,8 @@ func SchemaDump(dbName string, outputFile string, opt Options) (string, error) {
 		opt.DBPort = 5432
 	}
 
-	cmd := fmt.Sprintf("pg_dump -h %s -p %d -U %s %s --schema-only",
-		opt.DBHost, opt.DBPort, opt.DBUser, dbName)
+	cmd := fmt.Sprintf("PGPASSWORD=%s pg_dump -h %s -p %d -U %s %s --schema-only",
+		opt.DBPassword, opt.DBHost, opt.DBPort, opt.DBUser, dbName)
 
 	out, err := run(cmd, opt)
 	if err != nil {
@@ -304,16 +304,16 @@ func psql(dbName string, query string, o Options) string {
 	if o.DBPort == 0 {
 		o.DBPort = 5432
 	}
-	return fmt.Sprintf("psql -h %s -d %s -U %s -p %d -v ON_ERROR_STOP=1 -t -c %q",
-		o.DBHost, dbName, o.DBUser, o.DBPort, query)
+	return fmt.Sprintf("PGPASSWORD=%s psql -h %s -d %s -U %s -p %d -v ON_ERROR_STOP=1 -t -c %q",
+		o.DBPassword, o.DBHost, dbName, o.DBUser, o.DBPort, query)
 }
 
 func psqlFile(dbName string, fileName string, o Options) string {
 	if o.DBPort == 0 {
 		o.DBPort = 5432
 	}
-	return fmt.Sprintf("psql -h %s -d %s -U %s -p %d -v ON_ERROR_STOP=1 --file=%s",
-		o.DBHost, dbName, o.DBUser, o.DBPort, fileName)
+	return fmt.Sprintf("PGPASSWORD=%s psql -h %s -d %s -U %s -p %d -v ON_ERROR_STOP=1 --file=%s",
+		o.DBPassword, o.DBHost, dbName, o.DBUser, o.DBPort, fileName)
 }
 
 func run(cmd string, o Options) (string, error) {
