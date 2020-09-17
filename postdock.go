@@ -37,6 +37,7 @@ type Options struct {
 
 	DBName     string
 	DBHost     string
+	DBPort     int
 	DBUser     string
 	DBPassword string
 
@@ -244,9 +245,12 @@ func SchemaDump(dbName string, outputFile string, opt Options) (string, error) {
 	if err := opt.isValid(dbName); err != nil {
 		return "", err
 	}
+	if opt.DBPort == 0 {
+		opt.DBPort = 5432
+	}
 
-	cmd := fmt.Sprintf("pg_dump -h %s -p 5432 -U %s %s --schema-only",
-		opt.DBHost, opt.DBUser, dbName)
+	cmd := fmt.Sprintf("pg_dump -h %s -p %d -U %s %s --schema-only",
+		opt.DBHost, opt.DBPort, opt.DBUser, dbName)
 
 	out, err := run(cmd, opt)
 	if err != nil {
@@ -297,13 +301,19 @@ func inDocker() bool {
 // psql is a helper function that takes a sql query and builds a psql
 // command against the given database. It can be passed directly to run.
 func psql(dbName string, query string, o Options) string {
-	return fmt.Sprintf("psql -h %s -d %s -U %s -p 5432 -v ON_ERROR_STOP=1 -t -c %q",
-		o.DBHost, dbName, o.DBUser, query)
+	if o.DBPort == 0 {
+		o.DBPort = 5432
+	}
+	return fmt.Sprintf("psql -h %s -d %s -U %s -p %d -v ON_ERROR_STOP=1 -t -c %q",
+		o.DBHost, dbName, o.DBUser, o.DBPort, query)
 }
 
 func psqlFile(dbName string, fileName string, o Options) string {
-	return fmt.Sprintf("psql -h %s -d %s -U %s -p 5432 -v ON_ERROR_STOP=1 --file=%s",
-		o.DBHost, dbName, o.DBUser, fileName)
+	if o.DBPort == 0 {
+		o.DBPort = 5432
+	}
+	return fmt.Sprintf("psql -h %s -d %s -U %s -p %d -v ON_ERROR_STOP=1 --file=%s",
+		o.DBHost, dbName, o.DBUser, o.DBPort, fileName)
 }
 
 func run(cmd string, o Options) (string, error) {
